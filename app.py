@@ -19,6 +19,10 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# Auto-create tables on startup (works with gunicorn too)
+with app.app_context():
+    pass  # Tables created after models are defined — see bottom of file
+
 
 # ─────────────────────────────────────────────
 # Models
@@ -334,4 +338,9 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         print("✓ Database tables created / verified.")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
+else:
+    # Called by gunicorn — ensure tables exist
+    with app.app_context():
+        db.create_all()
